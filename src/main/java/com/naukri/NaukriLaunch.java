@@ -1,6 +1,12 @@
 package com.naukri;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -13,22 +19,29 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
+import java.util.*;
+import javax.mail.*;
+import javax.mail.internet.*;
+import javax.activation.*;
+
 import com.properties.PropReader;
 
-public class NaukriLaunch {
-	
+public class NaukriLaunch {	
+
 	private static final Logger log = LogManager.getLogger(NaukriLaunch.class);
 
 	public static void main(String[] args) {
 		new NaukriLaunch().launch();
 	}
 
+	
+
 	public void launch() {
 		try {
 			System.setProperty("webdriver.chrome.driver","C:\\anil\\deploy\\Installables\\selenium-driver\\chromedriver.exe");
 			WebDriver driver = new ChromeDriver();	
 			driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-			log.trace("Applying for 5 jobs in Naukri");
+			log.trace("Applying for n jobs in Naukri");
 			driver.get("https://www.naukri.com");
 			WebElement elem = driver.findElement(By.id("login_Layer"));
 			System.out.println(elem.getText());
@@ -45,28 +58,48 @@ public class NaukriLaunch {
 			log.trace("mainWindowHandle is " + mainWindowHandle);
 
 			List<WebElement> jobElems =  driver.findElements(By.cssSelector("div[type='tuple']"));
-			int maxSize=5;
+			int maxApplyCount = Integer.parseInt(propReader.get("naukri_maxApplyCount"));			
 			int count=0;
 			for (WebElement jobElem : jobElems) {
 				jobElem.findElement(By.tagName("a")).click();
 				count++;
-				if (count>maxSize) {
+				if (count>maxApplyCount) {
 					break;
 				}
 			}
-			
+
 			ArrayList<String> tabs = new ArrayList<String> (driver.getWindowHandles());
+			List<JobAppliedStatus>jobStatuses = new ArrayList<JobAppliedStatus>();
 			for (String tab : tabs) {
-				applyForJob(tab, driver, mainWindowHandle);				
+				jobStatuses.add(applyForJob(tab, driver, mainWindowHandle));							
 			}
+			write(jobStatuses);
+
 			//Switch to main/parent window
 			driver.switchTo().window(mainWindowHandle);
 
 			driver.quit();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			log.error("Unable to launch Naukri ", e);
 			e.printStackTrace();
 		}
+	}
+
+	public void write(List<JobAppliedStatus> jobStatuses) {
+		try {
+
+			String fileTimeStamp = new SimpleDateFormat("yyyyMMddhhmmss'.txt'").format(new Date());
+			File file = new File(new PropReader().get("directory")+"result"+fileTimeStamp);
+			FileWriter fw = new FileWriter(file.getAbsoluteFile());
+			BufferedWriter bw = new BufferedWriter(fw);
+			for (JobAppliedStatus jobAppliedStatus : jobStatuses) {
+				bw.write(jobAppliedStatus.toString());
+			}		
+			bw.close();
+		}
+		catch (IOException e) {
+			log.error(e);
+		} 
 	}
 
 	private JobAppliedStatus applyForJob(String tab, WebDriver driver, String mainWindowHandle) {
@@ -90,17 +123,17 @@ public class NaukriLaunch {
 					log.trace(status.getMessage());
 				}
 			}				
-			
+
 		} catch (Exception e) {
 			log.error("Unable to apply for job window " + tab, e);
 			status.setMessage("Unable to apply for job window " + tab);
 		}
-		
+
 		finally {
-			driver.close();
-		}
-		
-		return status;
-		
+			if (!tab.equalsIgnoreCase(mainWindowHandle)) {
+				driver.close();
+			}			
+		}		
+		return status;		
 	}
 }

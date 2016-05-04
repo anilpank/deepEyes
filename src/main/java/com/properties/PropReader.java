@@ -1,7 +1,12 @@
 package com.properties;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
@@ -9,19 +14,28 @@ import org.apache.logging.log4j.Logger;
 
 public class PropReader {
 	private static final Logger logger = LogManager.getLogger(PropReader.class);
+	private final Map<String, String> propMap = new HashMap<String, String>();
 
-	public String get(final String key) {
-		logger.trace("just tracing this");
-		String value = null;
+	public PropReader() {
+		init();
+	}
+
+	private void init() {		
 		Properties prop = new Properties();
 		InputStream input = null;
 		try {
 			input = PropReader.class.getClassLoader().getResourceAsStream("deepEyes.properties");
 			// load a properties file
 			prop.load(input);
-			value = prop.getProperty(key);
+			Enumeration em = prop.keys();
+			while(em.hasMoreElements()){
+				String key = (String)em.nextElement();
+				String value = prop.getProperty(key);				
+				propMap.put(key, value);
+			}
+
 		} catch (IOException ex) {
-			logger.error("Unable to get property for " + key, ex);
+			logger.error("Unable to init ", ex);
 		} finally {
 			if (input != null) {
 				try {
@@ -30,9 +44,13 @@ public class PropReader {
 					e.printStackTrace();
 				}
 			}
-		}
-		return value;
+		}		
 	}
+
+	public String get(final String key) {
+		return propMap.get(key);
+	}
+	
 	public static void main(String[] args) {
 		logger.info("just tracing this");
 		Properties prop = new Properties();

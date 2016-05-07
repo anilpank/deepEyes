@@ -20,11 +20,13 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
 import java.util.*;
+
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
 
 import com.properties.PropReader;
+import com.util.MailUtil;
 
 public class NaukriLaunch {	
 
@@ -85,7 +87,8 @@ public class NaukriLaunch {
 		}
 	}
 
-	public void write(List<JobAppliedStatus> jobStatuses) {
+	public boolean write(List<JobAppliedStatus> jobStatuses) {
+		boolean writeStatus = false;
 		try {
 
 			String fileTimeStamp = new SimpleDateFormat("yyyy_MMM_dd_hh_mm_ss'.txt'").format(new Date());
@@ -93,15 +96,20 @@ public class NaukriLaunch {
 			FileWriter fw = new FileWriter(file.getAbsoluteFile());
 			BufferedWriter bw = new BufferedWriter(fw);
 			long successCount = jobStatuses.stream().filter(status -> status.isSuccess()).count();
+			new MailUtil().mail("Naukri status of applying for " + new PropReader().get("naukri_maxApplyCount") +" jobs", 
+					"Successfully applied for " + successCount + " jobs");
 			bw.write("Successfully applied for " + successCount + " jobs");
 			for (JobAppliedStatus jobAppliedStatus : jobStatuses) {
 				bw.write(jobAppliedStatus.toString());
 			}		
 			bw.close();
+			writeStatus = true;
 		}
 		catch (IOException e) {
 			log.error(e);
-		} 
+			writeStatus = false;
+		}
+		return writeStatus;
 	}
 
 	private JobAppliedStatus applyForJob(String tab, WebDriver driver, String mainWindowHandle) {

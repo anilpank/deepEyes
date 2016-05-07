@@ -88,7 +88,7 @@ public class NaukriLaunch {
 	public void write(List<JobAppliedStatus> jobStatuses) {
 		try {
 
-			String fileTimeStamp = new SimpleDateFormat("yyyy_MMM_dd_hh:mm:ss'.txt'").format(new Date());
+			String fileTimeStamp = new SimpleDateFormat("yyyy_MMM_dd_hh_mm_ss'.txt'").format(new Date());
 			File file = new File(new PropReader().get("directory")+"result"+fileTimeStamp);
 			FileWriter fw = new FileWriter(file.getAbsoluteFile());
 			BufferedWriter bw = new BufferedWriter(fw);

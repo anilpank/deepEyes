@@ -34,7 +34,7 @@ public class NaukriLaunch {
 		new NaukriLaunch().launch();
 	}
 
-	
+
 
 	public void launch() {
 		try {
@@ -88,10 +88,12 @@ public class NaukriLaunch {
 	public void write(List<JobAppliedStatus> jobStatuses) {
 		try {
 
-			String fileTimeStamp = new SimpleDateFormat("yyyyMMddhhmmss'.txt'").format(new Date());
+			String fileTimeStamp = new SimpleDateFormat("yyyy_MMM_dd_hh:mm:ss'.txt'").format(new Date());
 			File file = new File(new PropReader().get("directory")+"result"+fileTimeStamp);
 			FileWriter fw = new FileWriter(file.getAbsoluteFile());
 			BufferedWriter bw = new BufferedWriter(fw);
+			long successCount = jobStatuses.stream().filter(status -> status.isSuccess()).count();
+			bw.write("Successfully applied for " + successCount + " jobs");
 			for (JobAppliedStatus jobAppliedStatus : jobStatuses) {
 				bw.write(jobAppliedStatus.toString());
 			}		

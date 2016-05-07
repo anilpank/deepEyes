@@ -11,14 +11,19 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.MimeMessage;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.naukri.NaukriLaunch;
 import com.properties.PropReader;
 
-public class MailUtil {
+public class MailUtil {	
+	private static final Logger log = LogManager.getLogger(MailUtil.class);
 	
-	public void mail() {
+	public boolean mail(final String subject, final String body) {
+		boolean result = true;
 		PropReader propReader = new PropReader();
 		Properties props = new Properties();
-		String SMPT_HOSTNAME = "smtp.live.com";		
 		
 		props.put("mail.smtp.host", propReader.get("SMTP_HOSTNAME"));
 		props.put("mail.from",propReader.get("mail.from"));
@@ -39,14 +44,18 @@ public class MailUtil {
 			MimeMessage msg = new MimeMessage(session);
 			msg.setFrom();
 			msg.setRecipients(Message.RecipientType.TO,
-					"anil.iitk@gmail.com");
-			msg.setSubject("JavaMail hello world example");
+					propReader.get("emailTo"));
+			msg.setSubject(subject);
 			msg.setSentDate(new Date());
-			msg.setText("Hello, world!\n");
+			msg.setText(body);
 			Transport.send(msg);
 		} catch (MessagingException mex) {
-			System.out.println("send failed, exception: " + mex);
+			log.error("Unable to send message", mex);
+			result = false;
+			return result;
 		}
+		
+		return result;
 	}
 
 
